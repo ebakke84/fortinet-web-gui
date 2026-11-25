@@ -282,6 +282,7 @@ label.ck input{accent-color:var(--accent);width:15px;height:15px;margin:0}
     </div>
     <div class="checks">
       <label class="ck"><input type="checkbox" id="a-ztp" checked> Auto-godkjenn AP-er på grensesnittet</label>
+      <label class="ck"><input type="checkbox" id="a-ntp" checked> NTP-server på grensesnittet (kreves for FortiAP og FortiSwitch)</label>
       <label class="ck"><input type="checkbox" id="a-def" checked> Skriv til standardprofil (FAPxxx-default)</label>
     </div>
     <label class="fld" id="a-prefix-box" hidden><span>Profilprefiks</span><input type="text" id="a-prefix" value="UC"></label>
@@ -519,7 +520,7 @@ function addVlan(d){const n=++vlanN,id=k=>`vl${n}-${k}`;const el=document.create
     <label class="ck"><input type="checkbox" id="${id('ping')}" data-f="ping" ${d.ping?'checked':''}> ping</label>
     <label class="ck"><input type="checkbox" id="${id('https')}" data-f="https" ${d.https?'checked':''}> https</label>
     <label class="ck"><input type="checkbox" id="${id('ssh')}" data-f="ssh" ${d.ssh?'checked':''}> ssh</label>
-    <label class="ck"><input type="checkbox" id="${id('ap')}" data-f="ap" ${d.ap?'checked':''}> FortiAP-nett (fabric, auto-godkjenning, DHCP option 138)</label>
+    <label class="ck"><input type="checkbox" id="${id('ap')}" data-f="ap" ${d.ap?'checked':''}> FortiAP/FortiSwitch-nett (fabric, auto-godkjenning, NTP, DHCP option 138)</label>
   </div>
   <div class="checks">
     <label class="ck"><input type="checkbox" id="${id('dhcp')}" data-f="dhcp" ${d.dhcp?'checked':''}> DHCP-server</label>
@@ -571,6 +572,8 @@ function genVLAN(){
     if(v.alias)c.set('alias',qq(v.alias));c.set('device-identification','enable');c.set('role',v.role);
     if(v.ap)c.set('auto-auth-extension-device','enable');
     c.set('interface',qq(parent));c.set('vlanid',v.vid)})}))});
+  const apV=V.filter(v=>v.ap&&v.g);
+  if(apV.length)D.push({ctx:'global',fn:c=>c.cfg('system ntp',()=>{c.set('ntpsync','enable');c.set('server-mode','enable');c.line('append interface '+apV.map(v=>qq(v.name)).join(' '))})});
   const dnsLocal=V.filter(v=>v.dhcp&&v.dns==='local'&&v.g);
   D.push({ctx:'vdom',fn:c=>{
     if(dnsLocal.length)c.cfg('system dns-server',()=>dnsLocal.forEach(v=>c.edit(v.name,()=>c.set('mode','recursive'))));
@@ -580,7 +583,7 @@ function genVLAN(){
       c.set('default-gateway',v.g.ipS);c.set('netmask',v.g.maskS);c.set('interface',qq(v.name));
       c.set('lease-time',Math.max(300,(+v.lease||8)*3600));
       c.cfg('ip-range',()=>c.edit(1,()=>{c.set('start-ip',i2ip(v.s));c.set('end-ip',i2ip(v.e))}));
-      if(v.ap)c.set('wifi-ac-service','local')})));
+      if(v.ap){c.set('ntp-service','local');c.set('wifi-ac-service','local')}})));
     const inet=V.filter(v=>v.inet&&v.g);
     if(inet.length)c.cfg('firewall policy',()=>inet.forEach(v=>c.edit(base+V.indexOf(v),()=>{
       c.set('name',qq(v.name+'-internett'));c.set('srcintf',qq(v.name));c.set('dstintf',qq(wan));c.set('action','accept');
@@ -590,10 +593,11 @@ function genVLAN(){
     const inet=V.filter(v=>v.inet&&v.g);if(inet.length)c.cfg('firewall policy',()=>inet.forEach(v=>c.line('delete '+(base+V.indexOf(v)))));
     const dh=V.filter(v=>v.dhcp&&v.g);if(dh.length)c.cfg('system dhcp server',()=>dh.forEach(v=>c.line('delete '+(+v.vid))));
     if(dnsLocal.length)c.cfg('system dns-server',()=>dnsLocal.forEach(v=>c.line('delete '+qq(v.name))));}});
+  if(apV.length)U.push({ctx:'global',fn:c=>c.cfg('system ntp',()=>c.line('unselect interface '+apV.map(v=>qq(v.name)).join(' ')))});
   U.push({ctx:'global',fn:c=>c.cfg('system interface',()=>V.forEach(v=>v.g&&c.line('delete '+qq(v.name))))});
   V.forEach(v=>{if(!v.g)return;const parts=[`VLAN ${v.vid} <code>${esc(v.name)}</code> på <code>${esc(parent)}</code> med gateway ${v.g.ipS}/${v.g.p}`];
-    if(v.dhcp)parts.push(`DHCP ${i2ip(v.s)}–${i2ip(v.e)}`);if(v.inet)parts.push(`internett via ${esc(wan)} (policy ${base+V.indexOf(v)})`);if(v.ap)parts.push('klar for FortiAP med auto-godkjenning og option 138');S.push(parts.join(', ')+'.')});
-  if(V.some(v=>v.ap))S.push('VLAN merket FortiAP-nett får <code>fabric</code> i allowaccess (CAPWAP), <code>auto-auth-extension-device</code> og DHCP option 138 som peker AP-ene til FortiGaten.');
+    if(v.dhcp)parts.push(`DHCP ${i2ip(v.s)}–${i2ip(v.e)}`);if(v.inet)parts.push(`internett via ${esc(wan)} (policy ${base+V.indexOf(v)})`);if(v.ap)parts.push('klar for FortiAP med auto-godkjenning, option 138 og NTP');S.push(parts.join(', ')+'.')});
+  if(V.some(v=>v.ap))S.push('VLAN merket FortiAP-nett får <code>fabric</code> i allowaccess (CAPWAP), <code>auto-auth-extension-device</code> og DHCP option 138 som peker AP-ene til FortiGaten. Grensesnittet legges også til under <i>NTP: Listen on interfaces</i>, og DHCP deler ut FortiGaten som NTP-server. FortiAP og FortiSwitch krever NTP.');
   if(V.some(v=>v.https&&v.inet))W.push('HTTPS-administrasjon er åpen på et VLAN med internett-tilgang. Vurder å begrense det til admin-nett.');
   S.push('Angre-fanen sletter policyer og DHCP-servere før grensesnittene. Et grensesnitt som fortsatt brukes andre steder, kan ikke slettes.');
   return {E,W,S,D,U}}
@@ -650,8 +654,8 @@ const OK6=['sae','owe','wpa3e'],ENT=['wpa2e','wpa3e'];
 function genAP(){
   const E=[],W=[],S=[];
   const models=[...document.querySelectorAll('.model[aria-pressed="true"]')].map(b=>b.dataset.m);if(!models.length)E.push('Velg minst én AP-modell.');
-  const iface=val('a-iface').trim(),country=val('a-country').trim().toUpperCase(),ztp=chk('a-ztp'),def=chk('a-def'),prefix=val('a-prefix').trim();
-  if(ztp&&!iface)E.push('Oppgi grensesnittet AP-ene kobles til.');if(!/^[A-Z]{2}$/.test(country))E.push('Landkode må være to bokstaver, f.eks. NO.');
+  const iface=val('a-iface').trim(),country=val('a-country').trim().toUpperCase(),ztp=chk('a-ztp'),ntp=chk('a-ntp'),def=chk('a-def'),prefix=val('a-prefix').trim();
+  if((ztp||ntp)&&!iface)E.push('Oppgi grensesnittet AP-ene kobles til.');if(!/^[A-Z]{2}$/.test(country))E.push('Landkode må være to bokstaver, f.eks. NO.');
   if(!def&&!nameOK(prefix,20))E.push('Profilprefikset må være 1–20 tegn uten mellomrom.');
   const darrp=chk('a-darrp'),dfs=chk('a-dfs'),steer=chk('a-steer'),wids=chk('a-wids'),w5=val('a-w5'),w6=val('a-w6');
   const pw={'2g':[num('a-p2l'),num('a-p2h')],'5g':[num('a-p5l'),num('a-p5h')],'6g':[num('a-p6l'),num('a-p6h')]};
@@ -692,6 +696,7 @@ function genAP(){
 
   const P=pre('fortiap');const D=[...P.segs],U=[];S.push(...P.S);
   if(ztp)D.push({ctx:'global',fn:c=>c.cfg('system interface',()=>c.edit(iface,()=>{c.line('append allowaccess ping fabric');c.set('auto-auth-extension-device','enable')}))});
+  if(ntp&&iface)D.push({ctx:'global',fn:c=>c.cfg('system ntp',()=>{c.set('ntpsync','enable');c.set('server-mode','enable');c.line('append interface '+qq(iface))})});
   D.push({ctx:'vdom',fn:c=>{
     c.cfg('wireless-controller setting',()=>{c.set('country',country);if(darrp)c.set('darrp-optimize',86400)});
     if(needR)c.cfg('user radius',()=>c.edit(rname,()=>{c.set('server',qq(rip));c.set('secret',qq(rsec))}));
@@ -746,11 +751,13 @@ function genAP(){
     if(tun.length)c.cfg('system dhcp server',()=>tun.forEach((_,i)=>c.line('delete '+(700+i))));
     c.cfg('wireless-controller vap',()=>SS.forEach(s=>c.line('delete '+qq(s.vap))));
     if(needR)c.cfg('user radius',()=>c.line('delete '+qq(rname)));}});
+  if(ntp&&iface)U.push({ctx:'global',fn:c=>c.cfg('system ntp',()=>c.line('unselect interface '+qq(iface)))});
   if(ztp)U.push({ctx:'global',fn:c=>c.cfg('system interface',()=>c.edit(iface,()=>{c.line('unselect allowaccess fabric');c.set('auto-auth-extension-device','disable')}))});
 
   models.forEach(m=>{const M=MODELS[m];const parts=M.r.map((r,i)=>{const b=r[0];if(b==='scan')return `radio ${i+1} ${wids?'dedikert skanning':'av'}`;const v=vapsOn(b);return `radio ${i+1} ${b.replace('2g','2,4 GHz').replace('5g','5 GHz').replace('6g','6 GHz')}: ${v.length?v.join(', '):'av (ingen SSID)'}`});
     S.push(`<b>FAP-${m}</b> → profil <code>${esc(profName(m))}</code>. ${parts.join('; ')}.`)});
   if(ztp)S.push(`<code>${esc(iface)}</code> får <code>fabric</code> (CAPWAP) lagt til i allowaccess med <code>append</code>, så eksisterende tilganger beholdes. Nye AP-er godkjennes automatisk.`);
+  if(ntp&&iface)S.push(`<code>${esc(iface)}</code> legges til under <i>NTP: Listen on interfaces</i> (<code>system ntp</code>, server-mode). FortiLink-enheter som AP-er og switcher trenger riktig tid for å koble seg til og validere sertifikater. <code>append</code> beholder eksisterende NTP-grensesnitt.`);
   if(def)S.push('Profilene skrives til standardprofilene. Da får auto-godkjente AP-er riktig oppsett med én gang. Angre fjerner SSID-ene fra profilene, men lar resten stå.');
   S.push(`Land ${esc(country)}. 5 GHz bruker kanal ${ch5.join(', ')} med ${w5}${has6?`. 6 GHz bruker kanal ${ch6.join(', ')} med ${w6} (EU, 5945–6425 MHz)`:''}. Bare primærkanalen i hver blokk listes, slik FortiOS krever ved kanalbinding.`);
   if(darrp)S.push('DARRP velger kanal innenfor listen og optimaliserer en gang i døgnet.');
