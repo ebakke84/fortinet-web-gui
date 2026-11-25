@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FortiOS Config Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: workbench — form column left, sticky CLI console right; stacks on phones */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --surface-2:#f6f8fa; --ink:#14202b; --muted:#5a6875; --line:#d4dbe2;
+  --accent:#0d6f7c; --accent-ink:#ffffff; --accent-soft:#dcefF1;
+  --code-bg:#101921; --code-ink:#d7e1ea; --code-kw:#6fd0d9; --code-str:#f2c27a; --code-dim:#7f8f9d;
+  --ok:#2f7d4a; --warn:#9a6400; --warn-soft:#fbf0d9; --err:#b42a2a; --err-soft:#fbe3e3;
+  --r2g:#8a6dd1; --r5g:#2f8fc9; --r6g:#1f9e7a; --rscan:#8794a1;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1217; --surface:#141c23; --surface-2:#18222a; --ink:#e1e8ee; --muted:#93a1ad; --line:#26323c;
+  --accent:#43b8c4; --accent-ink:#06191c; --accent-soft:#16343a;
+  --code-bg:#0a0f14; --code-ink:#d7e1ea; --code-kw:#6fd0d9; --code-str:#f2c27a; --code-dim:#6d7d8a;
+  --ok:#5fbf80; --warn:#e3b04f; --warn-soft:#332a14; --err:#f07c7c; --err-soft:#3a1c1c;
+  --r2g:#a68ef0; --r5g:#5fb3e6; --r6g:#4cc9a2; --rscan:#7d8b97;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1217; --surface:#141c23; --surface-2:#18222a; --ink:#e1e8ee; --muted:#93a1ad; --line:#26323c;
+  --accent:#43b8c4; --accent-ink:#06191c; --accent-soft:#16343a;
+  --code-bg:#0a0f14; --code-ink:#d7e1ea; --code-kw:#6fd0d9; --code-str:#f2c27a; --code-dim:#6d7d8a;
+  --ok:#5fbf80; --warn:#e3b04f; --warn-soft:#332a14; --err:#f07c7c; --err-soft:#3a1c1c;
+  --r2g:#a68ef0; --r5g:#5fb3e6; --r6g:#4cc9a2; --rscan:#7d8b97;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5}
+.wrap{max-width:1440px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+header.top{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:flex-end;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.brand h1{font-family:var(--f-display);font-weight:600;font-size:28px;letter-spacing:.01em;margin:0;line-height:1.1;text-wrap:balance}
+.brand p{margin:4px 0 0;color:var(--muted);max-width:60ch}
+.ver{display:inline-block;font-family:var(--f-mono);font-size:12px;padding:2px 8px;border:1px solid var(--accent);color:var(--accent);border-radius:4px;margin-left:8px;vertical-align:4px}
+.env{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end}
+.env .fld{min-width:150px}
+nav.tabs{display:flex;gap:4px;margin:18px 0 18px;overflow-x:auto;border-bottom:1px solid var(--line)}
+nav.tabs button{font:inherit;font-family:var(--f-display);font-size:16px;font-weight:600;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:8px 14px 9px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs button:hover{color:var(--ink)}
+.work{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:1000px){.work{grid-template-columns:minmax(0,1fr)}}
+.form{display:flex;flex-direction:column;gap:16px;min-width:0}
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.sec h3{margin:0;font-family:var(--f-display);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sec .hint{margin:0;color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld>span{font-size:12px;font-weight:500;color:var(--muted)}
+input[type=text],input[type=number],input[type=password],select,textarea{font:inherit;font-family:var(--f-mono);font-size:13px;width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);min-width:0}
+textarea{resize:vertical;min-height:58px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.row{display:flex;gap:8px;align-items:stretch}
+.row>input{flex:1}
+.checks{display:flex;flex-wrap:wrap;gap:8px 18px}
+label.ck{display:inline-flex;gap:7px;align-items:center;cursor:pointer;font-size:13px}
+label.ck input{accent-color:var(--accent);width:15px;height:15px;margin:0}
+.btn{font:inherit;font-size:13px;font-weight:500;padding:7px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--err)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font-family:var(--f-mono);font-size:12px;padding:5px 9px;border-radius:5px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.sub{border-left:2px solid var(--accent);padding-left:12px;display:flex;flex-direction:column;gap:10px}
+.card{border:1px solid var(--line);border-radius:7px;padding:12px;background:var(--surface-2);display:flex;flex-direction:column;gap:10px}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card-h b{font-family:var(--f-mono);font-size:13px}
+/* Model cards */
+.models{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:10px}
+.model{text-align:left;font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:8px;color:var(--ink)}
+.model[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--surface)}
+.model .mh{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.model .mn{font-family:var(--f-display);font-weight:600;font-size:17px}
+.model .mg{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.model .tick{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line);flex:none;display:grid;place-items:center;font-size:11px;color:var(--accent-ink)}
+.model[aria-pressed="true"] .tick{background:var(--accent);border-color:var(--accent)}
+.radios{display:flex;flex-direction:column;gap:3px}
+.rad{display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px;align-items:center;font-size:12px}
+.rad i{font-style:normal;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.rad span{border-radius:3px;padding:1px 6px;color:#fff;font-size:11.5px;font-weight:500;width:fit-content;max-width:100%;overflow-wrap:anywhere}
+.b2g{background:var(--r2g)} .b5g{background:var(--r5g)} .b6g{background:var(--r6g)} .bscan{background:var(--rscan)}
+.model .note{font-size:11.5px;color:var(--muted);line-height:1.4}
+/* Console */
+.out{position:sticky;top:16px;background:var(--surface);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;min-width:0;max-height:calc(100vh - 32px)}
+@media (max-width:1000px){.out{position:static;max-height:none}}
+.out-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.views{display:flex;gap:2px;background:var(--surface-2);padding:3px;border-radius:7px;border:1px solid var(--line)}
+.views button{font:inherit;font-size:13px;font-weight:500;padding:5px 11px;border:0;border-radius:5px;background:none;color:var(--muted);cursor:pointer}
+.views button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.msgs{list-style:none;margin:0;padding:8px 12px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line)}
+.msgs:empty{display:none}
+.msgs li{font-size:13px;padding:6px 10px;border-radius:5px;display:grid;grid-template-columns:auto 1fr;gap:8px}
+.msgs li::before{font-family:var(--f-mono);font-size:11px;font-weight:600;padding-top:2px}
+.msgs li.err{background:var(--err-soft);color:var(--err)} .msgs li.err::before{content:"FEIL"}
+.msgs li.warn{background:var(--warn-soft);color:var(--warn)} .msgs li.warn::before{content:"OBS"}
+.code{overflow:auto;background:var(--code-bg);color:var(--code-ink);margin:0;padding:14px 0;font-family:var(--f-mono);font-size:12.5px;line-height:1.6;flex:1;min-height:240px;border-radius:0 0 8px 8px;counter-reset:ln}
+.code .l{display:block;padding:0 16px 0 0;white-space:pre}
+.code .l::before{counter-increment:ln;content:counter(ln);display:inline-block;width:3.2em;padding-right:1em;text-align:right;color:var(--code-dim);user-select:none}
+.code .k{color:var(--code-kw)} .code .s{color:var(--code-str)}
+.code.blocked{opacity:.5}
+.summary{padding:14px 18px 18px;overflow:auto;flex:1}
+.summary h4{font-family:var(--f-display);font-size:15px;margin:14px 0 6px}
+.summary h4:first-child{margin-top:0}
+.summary ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.summary code,.hint code{font-family:var(--f-mono);font-size:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.foot{display:flex;justify-content:space-between;gap:8px;padding:8px 12px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);font-family:var(--f-mono)}
+.toast{color:var(--ok)}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <h1>FortiOS Config Generator <span class="ver">FortiOS 7.6</span></h1>
+    <p>Lag CLI-konfigurasjon for IPsec, VLAN med DHCP og FortiAP. Alt genereres lokalt i nettleseren, og ingenting sendes noe sted.</p>
+  </div>
+  <div class="env" aria-label="Utrullingsvalg for alle faner">
+    <label class="fld"><span>VDOM (tom = uten multi-VDOM)</span><input type="text" id="g-vdom" placeholder="f.eks. kunde1" autocomplete="off"></label>
+    <label class="ck"><input type="checkbox" id="g-backup" checked> Backup (revisjon) før endring</label>
+    <label class="ck"><input type="checkbox" id="g-revert"> Auto-revert</label>
+    <label class="fld" style="min-width:110px"><span>Revert etter (sek)</span><input type="number" id="g-revert-t" value="600" min="60" max="21600"></label>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" id="tab-vpn" data-tab="vpn" aria-selected="true">IPsec site-to-site</button>
+  <button role="tab" id="tab-vlan" data-tab="vlan" aria-selected="false">Interface / VLAN / DHCP</button>
+  <button role="tab" id="tab-ap" data-tab="ap" aria-selected="false">FortiAP</button>
+</nav>
+
+<div class="work">
+<div class="form">
+
+<!-- ============ VPN ============ -->
+<section data-panel="vpn" class="form">
+  <div class="sec">
+    <h3>Tunnel</h3>
+    <div class="grid">
+      <label class="fld"><span>VPN-navn (maks 15 tegn)</span><input type="text" id="v-name" value="VPN-BERGEN"></label>
+      <label class="fld"><span>Remote gateway (IP eller DNS)</span><input type="text" id="v-peer" value="203.0.113.20"></label>
+      <label class="fld"><span>IKE-versjon</span><select id="v-ike"><option value="2" selected>IKEv2 (anbefalt)</option><option value="1">IKEv1</option></select></label>
+    </div>
+    <label class="fld"><span>Pre-shared key</span>
+      <div class="row"><input type="text" id="v-psk" autocomplete="off" spellcheck="false"><button class="btn" type="button" id="v-psk-gen">Generer</button></div>
+    </label>
+    <div class="grid">
+      <label class="fld"><span>WAN-grensesnitt</span><input type="text" id="v-wan" value="wan1"></label>
+      <label class="fld"><span>LAN-grensesnitt</span><input type="text" id="v-lan" value="internal"></label>
+    </div>
+    <p class="hint">Grensesnittnavn skiller mellom store og små bokstaver og må finnes på FortiGaten.</p>
+  </div>
+
+  <div class="sec">
+    <h3>Nett</h3>
+    <div class="grid">
+      <label class="fld"><span>Lokale subnett (ett per linje)</span><textarea id="v-local">10.10.0.0/16</textarea></label>
+      <label class="fld"><span>Eksterne subnett (ett per linje)</span><textarea id="v-remote">10.20.0.0/24
+10.21.0.0/24</textarea></label>
+    </div>
+    <div class="grid">
+      <label class="fld"><span>Phase 2-selektorer</span><select id="v-sel"><option value="any" selected>0.0.0.0/0 (FortiGate til FortiGate)</option><option value="exact">Eksakte, én per subnettpar (tredjepart)</option></select></label>
+      <label class="fld"><span>ID-base for ruter og policyer</span><input type="number" id="v-idbase" value="900" min="1" max="60000"></label>
+    </div>
+    <div class="checks">
+      <label class="ck"><input type="checkbox" id="v-pol" checked> Lag brannmurpolicyer</label>
+      <label class="ck"><input type="checkbox" id="v-inb" checked> Tillat trafikk inn fra tunnelen</label>
+      <label class="ck"><input type="checkbox" id="v-dpd" checked> DPD on-idle</label>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3>Utvidet</h3>
+    <div class="checks">
+      <label class="ck"><input type="checkbox" id="v-sdwan"> SD-WAN</label>
+      <label class="ck"><input type="checkbox" id="v-bgp"> BGP</label>
+      <label class="ck"><input type="checkbox" id="v-nat"> NAT (overlappende nett)</label>
+    </div>
+    <div class="sub" id="v-tun-box" hidden>
+      <p class="hint">Tunnel-IP kreves for BGP og for SLA-ping i SD-WAN.</p>
+      <div class="grid">
+        <label class="fld"><span>Lokal tunnel-IP</span><input type="text" id="v-tl" value="169.254.10.1"></label>
+        <label class="fld"><span>Ekstern tunnel-IP</span><input type="text" id="v-tr" value="169.254.10.2"></label>
+      </div>
+    </div>
+    <div class="sub" id="v-sdwan-box" hidden>
+      <div class="grid">
+        <label class="fld"><span>SD-WAN-sone</span><input type="text" id="v-zone" value="VPN"></label>
+        <label class="fld"><span>Medlem-ID (1–512)</span><input type="number" id="v-mid" value="10" min="1" max="512"></label>
+        <label class="fld"><span>SLA-ping mål (tom = ingen)</span><input type="text" id="v-hc" value="10.20.0.1"></label>
+      </div>
+    </div>
+    <div class="sub" id="v-bgp-box" hidden>
+      <div class="grid">
+        <label class="fld"><span>Lokal ASN</span><input type="number" id="v-las" value="65010"></label>
+        <label class="fld"><span>Ekstern ASN</span><input type="number" id="v-ras" value="65020"></label>
+      </div>
+    </div>
+    <div class="sub" id="v-nat-box" hidden>
+      <p class="hint">Lokalt nett presenteres som <em>kartlagt lokalt</em>. Eksternt nett nås via <em>kartlagt eksternt</em>, som motparten NAT-er. Prefikslengden må være lik den ekte.</p>
+      <div class="grid">
+        <label class="fld"><span>Kartlagt lokalt (CIDR)</span><input type="text" id="v-ml" value="10.110.0.0/16"></label>
+        <label class="fld"><span>Kartlagt eksternt (CIDR)</span><input type="text" id="v-mr" value="10.120.0.0/24"></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3>Kryptering</h3>
+    <div class="fld"><span>Phase 1-forslag</span><div class="chips" id="v-p1">
+      <button type="button" data-v="aes256gcm-prfsha384" aria-pressed="true">aes256gcm-prfsha384</button>
+      <button type="button" data-v="aes256gcm-prfsha256" aria-pressed="false">aes256gcm-prfsha256</button>
+      <button type="button" data-v="chacha20poly1305-prfsha256" aria-pressed="false">chacha20poly1305-prfsha256</button>
+      <button type="button" data-v="aes256-sha256" aria-pressed="true">aes256-sha256</button>
+      <button type="button" data-v="aes256-sha384" aria-pressed="false">aes256-sha384</button>
+      <button type="button" data-v="aes256-sha512" aria-pressed="false">aes256-sha512</button>
+      <button type="button" data-v="aes128-sha256" aria-pressed="false">aes128-sha256</button>
+    </div></div>
+    <div class="grid">
+      <div class="fld"><span>Phase 1 DH-grupper</span><div class="chips" id="v-p1dh">
+        <button type="button" data-v="21" aria-pressed="false">21</button><button type="button" data-v="20" aria-pressed="true">20</button><button type="button" data-v="19" aria-pressed="true">19</button><button type="button" data-v="14" aria-pressed="false">14</button>
+      </div></div>
+      <label class="fld"><span>Phase 1 keylife (s)</span><input type="number" id="v-p1life" value="28800" min="120" max="172800"></label>
+    </div>
+    <div class="fld"><span>Phase 2-forslag</span><div class="chips" id="v-p2">
+      <button type="button" data-v="aes256gcm" aria-pressed="true">aes256gcm</button>
+      <button type="button" data-v="chacha20poly1305" aria-pressed="false">chacha20poly1305</button>
+      <button type="button" data-v="aes256-sha256" aria-pressed="true">aes256-sha256</button>
+      <button type="button" data-v="aes256-sha512" aria-pressed="false">aes256-sha512</button>
+      <button type="button" data-v="aes128-sha256" aria-pressed="false">aes128-sha256</button>
+    </div></div>
+    <div class="grid">
+      <div class="fld"><span>Phase 2 PFS DH (ingen valgt = PFS av)</span><div class="chips" id="v-p2dh">
+        <button type="button" data-v="21" aria-pressed="false">21</button><button type="button" data-v="20" aria-pressed="true">20</button><button type="button" data-v="19" aria-pressed="true">19</button><button type="button" data-v="14" aria-pressed="false">14</button>
+      </div></div>
+      <label class="fld"><span>Phase 2 keylife (s)</span><input type="number" id="v-p2life" value="3600" min="120" max="172800"></label>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VLAN ============ -->
+<section data-panel="vlan" class="form" hidden>
+  <div class="sec">
+    <h3>Grunnlag</h3>
+    <div class="grid">
+      <label class="fld"><span>Fysisk/aggregat-grensesnitt</span><input type="text" id="i-parent" value="port3"></label>
+      <label class="fld"><span>WAN for internett-policy</span><input type="text" id="i-wan" value="wan1"></label>
+      <label class="fld"><span>Policy-ID-base</span><input type="number" id="i-idbase" value="800" min="1" max="60000"></label>
+    </div>
+    <p class="hint">DHCP-serveren får samme ID som VLAN-et, så angre-skriptet treffer riktig. Trafikk mellom VLAN blokkeres til du lager egne policyer.</p>
+  </div>
+  <div id="vlan-list" class="form"></div>
+  <button type="button" class="btn" id="vlan-add" style="align-self:flex-start">Legg til VLAN</button>
+</section>
+
+<!-- ============ AP ============ -->
+<section data-panel="ap" class="form" hidden>
+  <div class="sec">
+    <h3>Modeller</h3>
+    <p class="hint">Hver valgt modell får sin egen FortiAP-profil med riktig radiooppsett.</p>
+    <div class="models" id="a-models"></div>
+  </div>
+
+  <div class="sec">
+    <h3>Zero-touch</h3>
+    <div class="grid">
+      <label class="fld"><span>Grensesnitt der AP-ene kobles til</span><input type="text" id="a-iface" value="VL30-AP"></label>
+      <label class="fld"><span>Land (regulatorisk)</span><input type="text" id="a-country" value="NO" maxlength="2"></label>
+    </div>
+    <div class="checks">
+      <label class="ck"><input type="checkbox" id="a-ztp" checked> Auto-godkjenn AP-er på grensesnittet</label>
+      <label class="ck"><input type="checkbox" id="a-def" checked> Skriv til standardprofil (FAPxxx-default)</label>
+    </div>
+    <label class="fld" id="a-prefix-box" hidden><span>Profilprefiks</span><input type="text" id="a-prefix" value="UC"></label>
+    <p class="hint" id="a-def-hint">Nye AP-er som blir godkjent automatisk, får standardprofilen for sin modell. Da får de denne konfigurasjonen uten ekstra steg.</p>
+    <label class="fld"><span>Forhåndsregistrer serienummer (valgfritt, <code>SERIE;Navn</code> per linje)</span><textarea id="a-serials" placeholder="FP231KTF24000001;AP-Resepsjon"></textarea></label>
+    <label class="ck"><input type="checkbox" id="a-fw" checked> Oppgrader forhåndsregistrerte AP-er til nyeste firmware én gang</label>
+  </div>
+
+  <div class="sec">
+    <h3>Radio-tuning</h3>
+    <div class="checks">
+      <label class="ck"><input type="checkbox" id="a-darrp" checked> DARRP (automatisk kanal)</label>
+      <label class="ck"><input type="checkbox" id="a-dfs" checked> Ta med DFS-kanaler (5 GHz)</label>
+      <label class="ck"><input type="checkbox" id="a-steer" checked> Band steering</label>
+      <label class="ck"><input type="checkbox" id="a-wids" checked> Rogue-AP-skanning</label>
+    </div>
+    <div class="grid">
+      <label class="fld"><span>Kanalbredde 5 GHz</span><select id="a-w5"><option>20MHz</option><option selected>40MHz</option><option>80MHz</option></select></label>
+      <label class="fld"><span>Kanalbredde 6 GHz (231K)</span><select id="a-w6"><option>20MHz</option><option>40MHz</option><option selected>80MHz</option><option>160MHz</option></select></label>
+    </div>
+    <div class="grid">
+      <label class="fld"><span>Effekt 2,4 GHz min–maks (dBm)</span><div class="row"><input type="number" id="a-p2l" value="6" min="1" max="30"><input type="number" id="a-p2h" value="12" min="1" max="30"></div></label>
+      <label class="fld"><span>Effekt 5 GHz min–maks (dBm)</span><div class="row"><input type="number" id="a-p5l" value="10" min="1" max="30"><input type="number" id="a-p5h" value="18" min="1" max="30"></div></label>
+      <label class="fld"><span>Effekt 6 GHz min–maks (dBm)</span><div class="row"><input type="number" id="a-p6l" value="10" min="1" max="30"><input type="number" id="a-p6h" value="18" min="1" max="30"></div></label>
+    </div>
+    <p class="hint">2,4 GHz holdes alltid på 20 MHz med kanal 1, 6 og 11. Lavere effekt på 2,4 enn 5 GHz gjør at klientene foretrekker 5/6 GHz.</p>
+  </div>
+
+  <div class="sec">
+    <h3>AP-administrasjon</h3>
+    <div class="grid">
+      <label class="fld"><span>Tilgang til AP-ene</span><select id="a-access"><option value="">Ingen (anbefalt)</option><option value="ssh" selected>SSH</option><option value="https ssh">HTTPS + SSH</option></select></label>
+      <label class="fld"><span>Admin-passord på AP (valgfritt)</span><input type="text" id="a-pass" autocomplete="off"></label>
+    </div>
+  </div>
+
+  <div class="sec" id="a-radius-box" hidden>
+    <h3>RADIUS (for Enterprise-SSID)</h3>
+    <div class="grid">
+      <label class="fld"><span>Navn</span><input type="text" id="a-rname" value="NPS"></label>
+      <label class="fld"><span>Server-IP</span><input type="text" id="a-rip" value="10.10.10.5"></label>
+      <label class="fld"><span>Delt hemmelighet</span><input type="text" id="a-rsec" autocomplete="off"></label>
+    </div>
+  </div>
+
+  <div id="ssid-list" class="form"></div>
+  <button type="button" class="btn" id="ssid-add" style="align-self:flex-start">Legg til SSID</button>
+</section>
+</div>
+
+<!-- ============ OUTPUT ============ -->
+<aside class="out" aria-label="Generert konfigurasjon">
+  <div class="out-h">
+    <div class="views" role="tablist">
+      <button role="tab" data-view="deploy" aria-selected="true">Utrulling</button>
+      <button role="tab" data-view="undo" aria-selected="false">Angre</button>
+      <button role="tab" data-view="summary" aria-selected="false">Oppsummering</button>
+    </div>
+    <button class="btn primary" id="copy" type="button">Kopier</button>
+  </div>
+  <ul class="msgs" id="msgs"></ul>
+  <pre class="code" id="code" tabindex="0"></pre>
+  <div class="summary" id="summary" hidden></div>
+  <div class="foot"><span id="lines"></span><span id="toast" class="toast" aria-live="polite"></span></div>
+</aside>
+</div>
+</div>
+
+<script>
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const val=id=>$(id).value; const chk=id=>$(id).checked; const num=id=>parseInt($(id).value,10);
+const chips=id=>[...$(id).querySelectorAll('button[aria-pressed="true"]')].map(b=>b.dataset.v);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const qq=s=>'"'+String(s).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"';
+function ip2i(s){const p=String(s).trim().split('.');if(p.length!==4)return null;let n=0;for(const x of p){if(!/^\d{1,3}$/.test(x)||+x>255)return null;n=n*256+(+x)}return n>>>0}
+const i2ip=n=>[n>>>24,(n>>>16)&255,(n>>>8)&255,n&255].join('.');
+const pmask=p=>p===0?0:(0xFFFFFFFF<<(32-p))>>>0;
+function cidr(s){const m=String(s||'').trim().match(/^(\d+\.\d+\.\d+\.\d+)\/(\d{1,2})$/);if(!m)return null;const ip=ip2i(m[1]),p=+m[2];if(ip===null||p>32)return null;const mask=pmask(p),net=(ip&mask)>>>0,bc=(net|(~mask>>>0))>>>0;return{ip,p,mask,net,bc,ipS:i2ip(ip),maskS:i2ip(mask),netS:i2ip(net),bcS:i2ip(bc),hostBits:ip!==net,txt:i2ip(net)+'/'+p}}
+const overlap=(a,b)=>a.net<=b.bc&&b.net<=a.bc;
+function rnd(n){const a='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789-_.+=@';const b=new Uint32Array(n);crypto.getRandomValues(b);return [...b].map(x=>a[x%a.length]).join('')}
+const nameOK=(s,max)=>new RegExp('^[A-Za-z0-9_.-]{1,'+max+'}$').test(s);
+
+class CLI{constructor(){this.L=[];this.d=0}
+  line(s){this.L.push('    '.repeat(this.d)+s)}
+  set(k,v){this.line('set '+k+' '+v)}
+  cfg(p,f){this.line('config '+p);this.d++;f();this.d--;this.line('end')}
+  edit(n,f){this.line('edit '+(typeof n==='number'?n:qq(n)));this.d++;f();this.d--;this.line('next')}
+}
+function render(segs){
+  const c=new CLI(),vd=val('g-vdom').trim();let cur=null;
+  const close=()=>{if(cur){c.d--;c.line('end');cur=null}};
+  for(const s of segs){
+    if(!vd){s.fn(c);continue}
+    if(s.ctx!==cur){close();if(s.ctx==='global'){c.line('config global')}else{c.line('config vdom');c.line('edit '+qq(vd))}c.d++;cur=s.ctx}
+    s.fn(c)}
+  close();return c.L.join('\n')}
+function pre(tag){
+  const segs=[],S=[];
+  if(chk('g-revert')){const t=Math.max(60,num('g-revert-t')||600);
+    segs.push({ctx:'global',fn:c=>c.cfg('system global',()=>{c.set('cfg-save','revert');c.set('cfg-revert-timeout',t)})});
+    S.push(`Auto-revert er på. Hvis du ikke kjører <code>execute cfg save</code> innen ${t} sekunder, starter enheten på nytt med forrige lagrede konfig. Når alt virker: <code>execute cfg save</code>, og deretter <code>config system global</code> / <code>set cfg-save automatic</code>.`)}
+  if(chk('g-backup')){const d=new Date(),p=n=>String(n).padStart(2,'0');const cm=`pre-${tag}-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
+    segs.push({ctx:'global',fn:c=>c.line('execute backup config flash '+cm)});
+    S.push(`Lagrer en revisjon (<code>${cm}</code>) før endringene. Gjenopprett med <code>execute revision list config</code> og <code>execute restore config flash &lt;id&gt;</code>.`)}
+  return {segs,S}}
+function vdomName(){return val('g-vdom').trim()||'root'}
+
+/* ---------- VPN ---------- */
+function parseNets(id,label,E,W){
+  const out=[];for(const t of val(id).split(/[\s,;]+/).filter(Boolean)){const c=cidr(t);
+    if(!c){E.push(`${label} subnett «${esc(t)}» er ikke gyldig CIDR (f.eks. 10.1.0.0/24).`);continue}
+    if(c.hostBits)W.push(`${label} ${esc(t)} har vertsbiter satt og brukes som ${c.txt}.`);out.push(c)}
+  if(!out.length&&!E.length)E.push(`Oppgi minst ett ${label.toLowerCase()} subnett.`);return out}
+function genVPN(){
+  const E=[],W=[],S=[];
+  const name=val('v-name').trim();if(!nameOK(name,15))E.push('VPN-navnet må være 1–15 tegn uten mellomrom (bokstaver, tall, - _ .). Det blir også navnet på tunnelgrensesnittet.');
+  const peer=val('v-peer').trim(),peerIP=ip2i(peer)!==null,peerHost=!peerIP&&/^([a-z0-9-]+\.)+[a-z]{2,}$/i.test(peer);
+  if(!peerIP&&!peerHost)E.push('Remote gateway må være en IPv4-adresse eller et DNS-navn.');
+  const psk=val('v-psk');if(/[\s"\\]/.test(psk))E.push('PSK kan ikke inneholde mellomrom, " eller \\.');else if(psk.length<8)E.push('PSK må være minst 8 tegn.');else if(psk.length<20)W.push('PSK er kortere enn 20 tegn. Trykk Generer for en sterk nøkkel.');
+  const wan=val('v-wan').trim(),lan=val('v-lan').trim();if(!wan)E.push('Oppgi WAN-grensesnitt.');if(!lan)E.push('Oppgi LAN-grensesnitt.');
+  const ike=val('v-ike'),exact=val('v-sel')==='exact',pol=chk('v-pol'),inb=chk('v-inb')&&pol,dpd=chk('v-dpd');
+  const sdwan=chk('v-sdwan'),bgp=chk('v-bgp'),nat=chk('v-nat');
+  const L=parseNets('v-local','Lokalt',E,W),R=parseNets('v-remote','Eksternt',E,W);
+  let ml=null,mr=null;
+  if(nat){ml=cidr(val('v-ml'));mr=cidr(val('v-mr'));
+    if(!ml)E.push('Kartlagt lokalt må være gyldig CIDR.');if(!mr)E.push('Kartlagt eksternt må være gyldig CIDR.');
+    if(ml&&L[0]&&ml.p!==L[0].p)E.push(`Kartlagt lokalt (/${ml.p}) må ha samme prefikslengde som ${L[0].txt}.`);
+    if(L.length>1)W.push('NAT bruker bare det første lokale subnettet ('+(L[0]?L[0].txt:'')+').');
+    if(R.length>1)W.push('Med NAT nås motparten bare via kartlagt eksternt nett.');}
+  else for(const l of L)for(const r of R)if(overlap(l,r))E.push(`${l.txt} overlapper med ${r.txt}. Slå på NAT (overlappende nett) eller endre subnettene.`);
+  const RN=nat&&mr?[mr]:R, SL=nat&&ml?[ml]:L;
+  let tl='',tr='';
+  if(bgp||sdwan){tl=val('v-tl').trim();tr=val('v-tr').trim();
+    if(bgp&&(ip2i(tl)===null||ip2i(tr)===null))E.push('BGP krever gyldig lokal og ekstern tunnel-IP.');
+    if(!bgp&&(tl||tr)&&(ip2i(tl)===null||ip2i(tr)===null))E.push('Tunnel-IP-ene er ikke gyldige IPv4-adresser.')}
+  const zone=val('v-zone').trim(),mid=num('v-mid'),hc=val('v-hc').trim();
+  if(sdwan){if(!nameOK(zone,35))E.push('SD-WAN-sonen må ha et gyldig navn.');if(!(mid>=1&&mid<=512))E.push('SD-WAN medlem-ID må være 1–512.');if(hc&&ip2i(hc)===null)E.push('SLA-ping mål må være en IPv4-adresse.');if(hc&&!tl)W.push('SLA-ping over tunnelen trenger tunnel-IP. Fyll inn tunnel-IP-ene.')}
+  const las=num('v-las'),ras=num('v-ras');if(bgp&&(!(las>0)||!(ras>0)))E.push('Oppgi gyldige ASN-er.');
+  const p1=chips('v-p1'),p1dh=chips('v-p1dh'),p2=chips('v-p2'),p2dh=chips('v-p2dh');
+  if(!p1.length)E.push('Velg minst ett phase 1-forslag.');if(!p1dh.length)E.push('Velg minst én DH-gruppe for phase 1.');if(!p2.length)E.push('Velg minst ett phase 2-forslag.');
+  if(ike==='1'&&p1.some(x=>/gcm|chacha/.test(x)))E.push('GCM- og ChaCha20-forslag i phase 1 krever IKEv2.');
+  if(!p2dh.length)W.push('Ingen DH-gruppe i phase 2, så PFS blir slått av.');
+  if(p1dh.includes('14')||p2dh.includes('14'))W.push('DH-gruppe 14 er svakere enn 19/20/21. Bruk den bare hvis motparten krever det.');
+  const base=num('v-idbase');if(!(base>=1&&base<=60000))E.push('ID-base må være 1–60000.');
+  if(RN.length>40)E.push('Maks 40 eksterne subnett.');
+  const p1life=num('v-p1life')||28800,p2life=num('v-p2life')||3600;
+  const dst=sdwan?zone:name,pairs=[];
+  if(exact)SL.forEach((l,i)=>RN.forEach((r,j)=>pairs.push({n:`${name}-p2-${i+1}-${j+1}`,l,r})));
+  const p2names=exact?pairs.map(p=>p.n):[`${name}-p2`];
+  const Lname=L.map((_,i)=>`${name}_L${i+1}`),Rname=RN.map((_,i)=>`${name}_R${i+1}`);
+  const adv=bgp?(nat&&ml?[ml]:L):[];
+
+  const P=pre(name);const D=[...P.segs],U=[];S.push(...P.S);
+  D.push({ctx:'vdom',fn:c=>{
+    c.cfg('vpn ipsec phase1-interface',()=>c.edit(name,()=>{
+      if(peerHost)c.set('type','ddns');
+      c.set('interface',qq(wan));c.set('ike-version',ike);c.set('peertype','any');c.set('net-device','disable');
+      c.set('proposal',p1.join(' '));c.set('dhgrp',p1dh.join(' '));c.set('keylife',p1life);
+      if(peerHost)c.set('remotegw-ddns',qq(peer));else c.set('remote-gw',peer);
+      c.set('psksecret',qq(psk));
+      if(dpd){c.set('dpd','on-idle');c.set('dpd-retryinterval',10)}}));
+    c.cfg('vpn ipsec phase2-interface',()=>{
+      const body=(l,r)=>{c.set('phase1name',qq(name));c.set('proposal',p2.join(' '));
+        if(p2dh.length)c.set('dhgrp',p2dh.join(' '));else c.set('pfs','disable');
+        c.set('auto-negotiate','enable');c.set('keylifeseconds',p2life);
+        c.set('src-subnet',l?`${l.netS} ${l.maskS}`:'0.0.0.0 0.0.0.0');c.set('dst-subnet',r?`${r.netS} ${r.maskS}`:'0.0.0.0 0.0.0.0')};
+      if(exact)pairs.forEach(p=>c.edit(p.n,()=>body(p.l,p.r)));else c.edit(`${name}-p2`,()=>body(null,null))});
+    if(pol){
+      c.cfg('firewall address',()=>{L.forEach((l,i)=>c.edit(Lname[i],()=>{c.set('subnet',`${l.netS} ${l.maskS}`);c.set('comment',qq(name+' lokalt'))}));
+        RN.forEach((r,i)=>c.edit(Rname[i],()=>{c.set('subnet',`${r.netS} ${r.maskS}`);c.set('comment',qq(name+' eksternt'))}))});
+      c.cfg('firewall addrgrp',()=>{c.edit(`${name}_local`,()=>c.set('member',Lname.map(qq).join(' ')));c.edit(`${name}_remote`,()=>c.set('member',Rname.map(qq).join(' ')))});
+    }
+    if(nat&&ml&&L[0]){
+      c.cfg('firewall ippool',()=>c.edit(`${name}_pool`,()=>{c.set('type','fixed-port-range');c.set('startip',ml.netS);c.set('endip',ml.bcS);c.set('source-startip',L[0].netS);c.set('source-endip',L[0].bcS)}));
+      if(inb)c.cfg('firewall vip',()=>c.edit(`${name}_vip`,()=>{c.set('extip',`${ml.netS}-${ml.bcS}`);c.set('mappedip',qq(`${L[0].netS}-${L[0].bcS}`));c.set('extintf',sdwan?'"any"':qq(name))}));
+    }}});
+  if(tl&&tr)D.push({ctx:'global',fn:c=>c.cfg('system interface',()=>c.edit(name,()=>{c.set('ip',`${tl} 255.255.255.255`);c.set('remote-ip',`${tr} 255.255.255.252`);c.set('allowaccess','ping')}))});
+  D.push({ctx:'vdom',fn:c=>{
+    if(sdwan)c.cfg('system sdwan',()=>{c.set('status','enable');
+      c.cfg('zone',()=>c.edit(zone,()=>{}));
+      c.cfg('members',()=>c.edit(mid,()=>{c.set('interface',qq(name));c.set('zone',qq(zone))}));
+      if(hc)c.cfg('health-check',()=>c.edit(`${name}-hc`,()=>{c.set('server',qq(hc));c.set('protocol','ping');c.set('members',mid);
+        c.cfg('sla',()=>c.edit(1,()=>{c.set('latency-threshold',150);c.set('jitter-threshold',50);c.set('packetloss-threshold',2)}))}))});
+    c.cfg('router static',()=>{RN.forEach((r,i)=>{
+      if(!bgp)c.edit(base+i,()=>{c.set('dst',`${r.netS} ${r.maskS}`);if(sdwan)c.set('sdwan-zone',qq(zone));else c.set('device',qq(name));c.set('comment',qq(name+' tunnel'))});
+      c.edit(base+50+i,()=>{c.set('dst',`${r.netS} ${r.maskS}`);c.set('blackhole','enable');c.set('distance',254);c.set('comment',qq(name+' blackhole'))})});
+      if(bgp&&nat&&ml)c.edit(base+99,()=>{c.set('dst',`${ml.netS} ${ml.maskS}`);c.set('blackhole','enable');c.set('distance',254);c.set('comment',qq(name+' NAT-annonsering'))})});
+    if(bgp)c.cfg('router bgp',()=>{c.set('as',las);
+      c.cfg('neighbor',()=>c.edit(tr,()=>{c.set('remote-as',ras);c.set('soft-reconfiguration','enable');c.set('link-down-failover','enable')}));
+      c.cfg('network',()=>adv.forEach((n,i)=>c.edit(base+i,()=>c.set('prefix',`${n.netS} ${n.maskS}`))))});
+    if(pol)c.cfg('firewall policy',()=>{
+      c.edit(base,()=>{c.set('name',qq(name+'-ut'));c.set('srcintf',qq(lan));c.set('dstintf',qq(dst));c.set('action','accept');
+        c.set('srcaddr',qq(name+'_local'));c.set('dstaddr',qq(name+'_remote'));c.set('schedule','"always"');c.set('service','"ALL"');
+        if(nat&&ml){c.set('nat','enable');c.set('ippool','enable');c.set('poolname',qq(name+'_pool'))}c.set('logtraffic','all')});
+      if(inb)c.edit(base+1,()=>{c.set('name',qq(name+'-inn'));c.set('srcintf',qq(dst));c.set('dstintf',qq(lan));c.set('action','accept');
+        c.set('srcaddr',qq(name+'_remote'));c.set('dstaddr',qq(nat&&ml?name+'_vip':name+'_local'));c.set('schedule','"always"');c.set('service','"ALL"');c.set('logtraffic','all')})});
+  }});
+
+  U.push({ctx:'vdom',fn:c=>{
+    if(pol)c.cfg('firewall policy',()=>{c.line('delete '+base);if(inb)c.line('delete '+(base+1))});
+    if(bgp)c.cfg('router bgp',()=>{c.cfg('neighbor',()=>c.line('delete '+qq(tr)));c.cfg('network',()=>adv.forEach((_,i)=>c.line('delete '+(base+i))))});
+    c.cfg('router static',()=>{RN.forEach((_,i)=>{if(!bgp)c.line('delete '+(base+i));c.line('delete '+(base+50+i))});if(bgp&&nat&&ml)c.line('delete '+(base+99))});
+    if(sdwan)c.cfg('system sdwan',()=>{if(hc)c.cfg('health-check',()=>c.line('delete '+qq(name+'-hc')));c.cfg('members',()=>c.line('delete '+mid));c.cfg('zone',()=>c.line('delete '+qq(zone)))});
+    if(nat&&ml){if(inb)c.cfg('firewall vip',()=>c.line('delete '+qq(name+'_vip')));c.cfg('firewall ippool',()=>c.line('delete '+qq(name+'_pool')))}
+    if(pol){c.cfg('firewall addrgrp',()=>{c.line('delete '+qq(name+'_local'));c.line('delete '+qq(name+'_remote'))});
+      c.cfg('firewall address',()=>[...Lname,...Rname].forEach(n=>c.line('delete '+qq(n))))}
+    c.cfg('vpn ipsec phase2-interface',()=>p2names.forEach(n=>c.line('delete '+qq(n))));
+    c.cfg('vpn ipsec phase1-interface',()=>c.line('delete '+qq(name)));}});
+
+  S.push(`Route-based IKEv${ike}-tunnel <code>${esc(name)}</code> mot <code>${esc(peer)}</code> via <code>${esc(wan)}</code>${peerHost?' (DDNS-oppslag)':''}.`);
+  S.push(exact?`${pairs.length} phase 2-selektor(er), én per subnettpar.`:'Én phase 2 med 0.0.0.0/0. Rutene bestemmer hva som går i tunnelen.');
+  if(!bgp)S.push(`Statiske ruter til ${RN.map(r=>'<code>'+r.txt+'</code>').join(', ')} med ID ${base}–${base+RN.length-1}.`);
+  S.push(`Blackhole-ruter (distance 254) med ID ${base+50}–${base+50+RN.length-1}. De stopper lekkasje ut på WAN når tunnelen er nede.`);
+  if(sdwan)S.push(`Tunnelen legges i SD-WAN-sonen <code>${esc(zone)}</code> som medlem ${mid}. Policyene bruker sonen, ikke tunnelen.`);
+  if(bgp){S.push(`BGP AS ${las} mot nabo ${esc(tr)} (AS ${ras}). Annonserer ${adv.map(n=>'<code>'+n.txt+'</code>').join(', ')}.`);W.push('Kjører BGP allerede på enheten, sjekk at <code>set as</code> stemmer med eksisterende AS før du limer inn.')}
+  if(nat&&ml&&L[0])S.push(`NAT: ${L[0].txt} presenteres som ${ml.txt} (ippool${inb?' og VIP':''}). Motparten må rute ${ml.txt} hit.`);
+  if(pol)S.push(`Policy ${base} (ut)${inb?` og ${base+1} (inn)`:''} med logging av all trafikk.`);
+  S.push('Angre-fanen sletter alt i omvendt rekkefølge. Policy- og rute-ID-ene må være ledige før utrulling.');
+  if(!peerHost&&peerIP){const n=ip2i(peer);if(n>>>24===10||(n>>>20)===0xAC1||(n>>>16)===0xC0A8)W.push('Remote gateway er en privat adresse. Er det riktig?')}
+  return {E,W,S,D,U}}
+
+/* ---------- VLAN ---------- */
+let vlanN=0;
+function addVlan(d){const n=++vlanN,id=k=>`vl${n}-${k}`;const el=document.createElement('div');el.className='sec card-vlan';el.dataset.n=n;
+  el.innerHTML=`<div class="card-h"><h3>VLAN</h3><button type="button" class="btn ghost" data-del>Fjern</button></div>
+  <div class="grid">
+    <label class="fld"><span>VLAN-ID</span><input type="number" id="${id('vid')}" data-f="vid" min="1" max="4094" value="${d.vid}"></label>
+    <label class="fld"><span>Navn (maks 15)</span><input type="text" id="${id('name')}" data-f="name" value="${esc(d.name)}"></label>
+    <label class="fld"><span>Alias</span><input type="text" id="${id('alias')}" data-f="alias" value="${esc(d.alias)}"></label>
+    <label class="fld"><span>Gateway (IP/prefiks)</span><input type="text" id="${id('gw')}" data-f="gw" value="${esc(d.gw)}"></label>
+    <label class="fld"><span>Rolle</span><select id="${id('role')}" data-f="role"><option value="lan">LAN</option><option value="dmz">DMZ</option><option value="undefined">Udefinert</option></select></label>
+  </div>
+  <div class="checks">
+    <label class="ck"><input type="checkbox" id="${id('ping')}" data-f="ping" ${d.ping?'checked':''}> ping</label>
+    <label class="ck"><input type="checkbox" id="${id('https')}" data-f="https" ${d.https?'checked':''}> https</label>
+    <label class="ck"><input type="checkbox" id="${id('ssh')}" data-f="ssh" ${d.ssh?'checked':''}> ssh</label>
+    <label class="ck"><input type="checkbox" id="${id('ap')}" data-f="ap" ${d.ap?'checked':''}> FortiAP-nett (fabric, auto-godkjenning, DHCP option 138)</label>
+  </div>
+  <div class="checks">
+    <label class="ck"><input type="checkbox" id="${id('dhcp')}" data-f="dhcp" ${d.dhcp?'checked':''}> DHCP-server</label>
+    <label class="ck"><input type="checkbox" id="${id('inet')}" data-f="inet" ${d.inet?'checked':''}> Internett via WAN (NAT)</label>
+  </div>
+  <div class="sub" data-dhcpbox>
+    <div class="grid">
+      <label class="fld"><span>Fra (tom = auto)</span><input type="text" id="${id('start')}" data-f="start" value="${esc(d.start||'')}"></label>
+      <label class="fld"><span>Til (tom = auto)</span><input type="text" id="${id('end')}" data-f="end" value="${esc(d.end||'')}"></label>
+      <label class="fld"><span>Lease (timer)</span><input type="number" id="${id('lease')}" data-f="lease" min="1" max="2160" value="${d.lease||8}"></label>
+      <label class="fld"><span>DNS</span><select id="${id('dns')}" data-f="dns"><option value="default">Systemets DNS</option><option value="local">FortiGate (lokal DNS)</option><option value="specify">Egne servere</option></select></label>
+    </div>
+    <div class="grid" data-dnsbox>
+      <label class="fld"><span>DNS 1</span><input type="text" id="${id('dns1')}" data-f="dns1" value="${esc(d.dns1||'1.1.1.1')}"></label>
+      <label class="fld"><span>DNS 2</span><input type="text" id="${id('dns2')}" data-f="dns2" value="${esc(d.dns2||'9.9.9.9')}"></label>
+    </div>
+  </div>`;
+  el.querySelector('[data-f=role]').value=d.role||'lan';el.querySelector('[data-f=dns]').value=d.dns||'default';
+  $('vlan-list').appendChild(el);syncVlan(el)}
+function syncVlan(el){el.querySelector('[data-dhcpbox]').hidden=!el.querySelector('[data-f=dhcp]').checked;el.querySelector('[data-dnsbox]').hidden=el.querySelector('[data-f=dns]').value!=='specify';
+  const g=cidr(el.querySelector('[data-f=gw]').value);el.querySelector('h3').textContent='VLAN '+(el.querySelector('[data-f=vid]').value||'?')+(g?' · '+g.netS+'/'+g.p:'');
+  if(g){el.querySelector('[data-f=start]').placeholder=i2ip(g.net+Math.min(10,Math.max(1,(g.bc-g.net)>>2)));el.querySelector('[data-f=end]').placeholder=i2ip(g.bc-1)}}
+function readCard(el){const o={};el.querySelectorAll('[data-f]').forEach(i=>{o[i.dataset.f]=i.type==='checkbox'?i.checked:i.value.trim()});return o}
+function genVLAN(){
+  const E=[],W=[],S=[];const parent=val('i-parent').trim(),wan=val('i-wan').trim(),base=num('i-idbase'),vd=vdomName();
+  if(!parent)E.push('Oppgi grensesnittet VLAN-ene skal ligge på.');if(!(base>=1&&base<=60000))E.push('Policy-ID-base må være 1–60000.');
+  const V=[...document.querySelectorAll('.card-vlan')].map(readCard);if(!V.length)E.push('Legg til minst ett VLAN.');
+  const ids=new Set,names=new Set,nets=[];
+  V.forEach((v,i)=>{const tag=`VLAN ${v.vid||'#'+(i+1)}`;const vid=+v.vid;
+    if(!(vid>=1&&vid<=4094))E.push(`${tag}: VLAN-ID må være 1–4094.`);else if(ids.has(vid))E.push(`${tag}: VLAN-ID ${vid} er brukt to ganger.`);ids.add(vid);
+    if(!nameOK(v.name,15))E.push(`${tag}: navnet må være 1–15 tegn uten mellomrom.`);else if(names.has(v.name))E.push(`${tag}: navnet ${esc(v.name)} er brukt to ganger.`);names.add(v.name);
+    const g=cidr(v.gw);v.g=g;
+    if(!g){E.push(`${tag}: gateway må skrives som IP/prefiks, f.eks. 10.10.10.1/24.`);return}
+    if(g.p>30)E.push(`${tag}: prefikset /${g.p} er for lite for et klientnett.`);
+    else if(g.ip===g.net||g.ip===g.bc)E.push(`${tag}: gateway kan ikke være nett- eller kringkastingsadressen.`);
+    for(const o of nets)if(overlap(o.g,g))E.push(`${tag}: ${g.txt} overlapper med VLAN ${o.vid}.`);nets.push({g,vid:v.vid});
+    if(v.dhcp){const s=v.start?ip2i(v.start):g.net+Math.min(10,Math.max(1,(g.bc-g.net)>>2)),e=v.end?ip2i(v.end):g.bc-1;
+      if(s===null||e===null)E.push(`${tag}: DHCP-området har ugyldig IP.`);
+      else{if(s<=g.net||e>=g.bc||s>e)E.push(`${tag}: DHCP-området må ligge innenfor ${g.txt}.`);
+        if(g.ip>=s&&g.ip<=e)W.push(`${tag}: gateway ${g.ipS} ligger i DHCP-området. Flytt området, ellers kan adressen deles ut.`)}
+      v.s=s;v.e=e;
+      if(v.dns==='specify'&&(ip2i(v.dns1)===null||(v.dns2&&ip2i(v.dns2)===null)))E.push(`${tag}: DNS-servere må være IPv4-adresser.`)}
+    if(v.inet&&!wan)E.push(`${tag}: internett-tilgang krever WAN-grensesnitt.`);
+  });
+  const acc=v=>[v.ping&&'ping',v.https&&'https',v.ssh&&'ssh',v.ap&&'fabric'].filter(Boolean);
+  const P=pre('vlan');const D=[...P.segs],U=[];S.push(...P.S);
+  D.push({ctx:'global',fn:c=>c.cfg('system interface',()=>V.forEach(v=>{if(!v.g)return;c.edit(v.name,()=>{
+    c.set('vdom',qq(vd));c.set('ip',`${v.g.ipS} ${v.g.maskS}`);const a=acc(v);if(a.length)c.set('allowaccess',a.join(' '));
+    if(v.alias)c.set('alias',qq(v.alias));c.set('device-identification','enable');c.set('role',v.role);
+    if(v.ap)c.set('auto-auth-extension-device','enable');
+    c.set('interface',qq(parent));c.set('vlanid',v.vid)})}))});
+  const dnsLocal=V.filter(v=>v.dhcp&&v.dns==='local'&&v.g);
+  D.push({ctx:'vdom',fn:c=>{
+    if(dnsLocal.length)c.cfg('system dns-server',()=>dnsLocal.forEach(v=>c.edit(v.name,()=>c.set('mode','recursive'))));
+    const dh=V.filter(v=>v.dhcp&&v.g);
+    if(dh.length)c.cfg('system dhcp server',()=>dh.forEach(v=>c.edit(+v.vid,()=>{
+      c.set('dns-service',v.dns);if(v.dns==='specify'){c.set('dns-server1',v.dns1);if(v.dns2)c.set('dns-server2',v.dns2)}
+      c.set('default-gateway',v.g.ipS);c.set('netmask',v.g.maskS);c.set('interface',qq(v.name));
+      c.set('lease-time',Math.max(300,(+v.lease||8)*3600));
+      c.cfg('ip-range',()=>c.edit(1,()=>{c.set('start-ip',i2ip(v.s));c.set('end-ip',i2ip(v.e))}));
+      if(v.ap)c.set('wifi-ac-service','local')})));
+    const inet=V.filter(v=>v.inet&&v.g);
+    if(inet.length)c.cfg('firewall policy',()=>inet.forEach(v=>c.edit(base+V.indexOf(v),()=>{
+      c.set('name',qq(v.name+'-internett'));c.set('srcintf',qq(v.name));c.set('dstintf',qq(wan));c.set('action','accept');
+      c.set('srcaddr','"all"');c.set('dstaddr','"all"');c.set('schedule','"always"');c.set('service','"ALL"');c.set('nat','enable');c.set('logtraffic','all')})));
+  }});
+  U.push({ctx:'vdom',fn:c=>{
+    const inet=V.filter(v=>v.inet&&v.g);if(inet.length)c.cfg('firewall policy',()=>inet.forEach(v=>c.line('delete '+(base+V.indexOf(v)))));
+    const dh=V.filter(v=>v.dhcp&&v.g);if(dh.length)c.cfg('system dhcp server',()=>dh.forEach(v=>c.line('delete '+(+v.vid))));
+    if(dnsLocal.length)c.cfg('system dns-server',()=>dnsLocal.forEach(v=>c.line('delete '+qq(v.name))));}});
+  U.push({ctx:'global',fn:c=>c.cfg('system interface',()=>V.forEach(v=>v.g&&c.line('delete '+qq(v.name))))});
+  V.forEach(v=>{if(!v.g)return;const parts=[`VLAN ${v.vid} <code>${esc(v.name)}</code> på <code>${esc(parent)}</code> med gateway ${v.g.ipS}/${v.g.p}`];
+    if(v.dhcp)parts.push(`DHCP ${i2ip(v.s)}–${i2ip(v.e)}`);if(v.inet)parts.push(`internett via ${esc(wan)} (policy ${base+V.indexOf(v)})`);if(v.ap)parts.push('klar for FortiAP med auto-godkjenning og option 138');S.push(parts.join(', ')+'.')});
+  if(V.some(v=>v.ap))S.push('VLAN merket FortiAP-nett får <code>fabric</code> i allowaccess (CAPWAP), <code>auto-auth-extension-device</code> og DHCP option 138 som peker AP-ene til FortiGaten.');
+  if(V.some(v=>v.https&&v.inet))W.push('HTTPS-administrasjon er åpen på et VLAN med internett-tilgang. Vurder å begrense det til admin-nett.');
+  S.push('Angre-fanen sletter policyer og DHCP-servere før grensesnittene. Et grensesnitt som fortsatt brukes andre steder, kan ikke slettes.');
+  return {E,W,S,D,U}}
+
+/* ---------- FortiAP ---------- */
+const MODELS={
+  '231F':{gen:'Wi-Fi 6',ss:'2x2',k:false,r:[['2g','2,4 GHz ax'],['5g','5 GHz ax, maks 80 MHz'],['scan','Dedikert skanning']],note:'Tredje radio skanner hele tiden etter rogue-AP-er uten å påvirke klientene.'},
+  '431F':{gen:'Wi-Fi 6',ss:'4x4',k:false,r:[['2g','2,4 GHz ax 4x4'],['5g','5 GHz ax 4x4, maks 80 MHz'],['scan','Dedikert skanning']],note:'4x4 gir høyere kapasitet. Velegnet for tette rom som møterom og kantiner.'},
+  '221K':{gen:'Wi-Fi 7',ss:'2x2',k:true,r:[['2g','2,4 GHz ax'],['5g','5 GHz be, maks 80 MHz']],note:'Har ingen 6 GHz-radio. Krever FortiOS 7.6-patch med støtte for 221K, så sjekk med <code>set type ?</code>.'},
+  '231K':{gen:'Wi-Fi 7',ss:'2x2',k:true,r:[['2g','2,4 GHz ax'],['5g','5 GHz be, maks 80 MHz'],['6g','6 GHz be, maks 160 MHz']],note:'Krever FortiAP 7.6.2 eller nyere. Secure boot godtar bare offisielt sertifisert GA-firmware.'}};
+const BANDCLASS={'2g':'b2g','5g':'b5g','6g':'b6g','scan':'bscan'};
+function buildModels(){$('a-models').innerHTML=Object.entries(MODELS).map(([m,d])=>`<button type="button" class="model" data-m="${m}" aria-pressed="${m==='231K'||m==='431F'}">
+  <div class="mh"><span class="mn">FAP-${m}</span><span class="tick" aria-hidden="true">✓</span></div>
+  <span class="mg">${d.gen} · ${d.ss}</span>
+  <div class="radios">${d.r.map((x,i)=>`<div class="rad"><i>Radio ${i+1}</i><span class="${BANDCLASS[x[0]]}">${x[1]}</span></div>`).join('')}</div>
+  <span class="note">${d.note}</span></button>`).join('')}
+let ssidN=0;
+function addSsid(d){const n=++ssidN,id=k=>`ss${n}-${k}`;const el=document.createElement('div');el.className='sec card-ssid';
+  el.innerHTML=`<div class="card-h"><h3>SSID</h3><button type="button" class="btn ghost" data-del>Fjern</button></div>
+  <div class="grid">
+    <label class="fld"><span>SSID (det klientene ser)</span><input type="text" id="${id('ssid')}" data-f="ssid" value="${esc(d.ssid)}"></label>
+    <label class="fld"><span>Objektnavn (maks 15)</span><input type="text" id="${id('vap')}" data-f="vap" value="${esc(d.vap)}"></label>
+    <label class="fld"><span>Sikkerhet</span><select id="${id('sec')}" data-f="sec">
+      <option value="wpa2p">WPA2 Personal</option><option value="trans">WPA2/WPA3 Transition</option><option value="sae">WPA3 SAE</option>
+      <option value="owe">OWE (åpent, kryptert)</option><option value="wpa2e">WPA2 Enterprise (RADIUS)</option><option value="wpa3e">WPA3 Enterprise (RADIUS)</option></select></label>
+  </div>
+  <label class="fld" data-pwbox><span>Passord (8–63 tegn)</span><div class="row"><input type="text" id="${id('pw')}" data-f="pw" value="${esc(d.pw||'')}" autocomplete="off" spellcheck="false"><button type="button" class="btn" data-gen>Generer</button></div></label>
+  <div class="grid">
+    <label class="fld"><span>Modus</span><select id="${id('mode')}" data-f="mode"><option value="bridge">Bridge (lokal)</option><option value="tunnel">Tunnel til FortiGate</option></select></label>
+    <label class="fld" data-vlanbox><span>VLAN-ID (tom = native)</span><input type="number" id="${id('vlan')}" data-f="vlan" min="1" max="4094" value="${d.vlan||''}"></label>
+    <label class="fld" data-tunbox><span>Tunnel-nett (gateway IP/prefiks)</span><input type="text" id="${id('tcidr')}" data-f="tcidr" value="${esc(d.tcidr||'10.50.0.1/24')}"></label>
+  </div>
+  <div class="checks"><span class="hint">Radioer:</span>
+    <label class="ck"><input type="checkbox" id="${id('r2')}" data-f="r2" ${d.r2?'checked':''}> 2,4 GHz</label>
+    <label class="ck"><input type="checkbox" id="${id('r5')}" data-f="r5" ${d.r5?'checked':''}> 5 GHz</label>
+    <label class="ck"><input type="checkbox" id="${id('r6')}" data-f="r6" ${d.r6?'checked':''}> 6 GHz</label>
+  </div>
+  <div class="checks">
+    <label class="ck"><input type="checkbox" id="${id('iso')}" data-f="iso" ${d.iso?'checked':''}> Klient-isolering</label>
+    <label class="ck"><input type="checkbox" id="${id('roam')}" data-f="roam" ${d.roam?'checked':''}> Rask roaming (802.11r/k/v)</label>
+    <label class="ck"><input type="checkbox" id="${id('rate')}" data-f="rate" ${d.rate!==false?'checked':''}> Minimum 12 Mbps</label>
+    <label class="ck"><input type="checkbox" id="${id('mc')}" data-f="mc" ${d.mc!==false?'checked':''}> Multicast-optimalisering</label>
+    <label class="ck"><input type="checkbox" id="${id('hide')}" data-f="hide" ${d.hide?'checked':''}> Skjult SSID</label>
+  </div>`;
+  el.querySelector('[data-f=sec]').value=d.sec;el.querySelector('[data-f=mode]').value=d.mode||'bridge';
+  $('ssid-list').appendChild(el);syncSsid(el)}
+function syncSsid(el){const s=el.querySelector('[data-f=sec]').value,m=el.querySelector('[data-f=mode]').value;
+  el.querySelector('[data-pwbox]').hidden=!['wpa2p','trans','sae'].includes(s);
+  el.querySelector('[data-vlanbox]').hidden=m!=='bridge';el.querySelector('[data-tunbox]').hidden=m!=='tunnel';
+  el.querySelector('h3').textContent='SSID · '+(el.querySelector('[data-f=ssid]').value||'uten navn');
+  const anyEnt=[...document.querySelectorAll('.card-ssid [data-f=sec]')].some(x=>ENT.includes(x.value));$('a-radius-box').hidden=!anyEnt}
+const SEC={wpa2p:'wpa2-only-personal',trans:'wpa3-sae-transition',sae:'wpa3-sae',owe:'owe',wpa2e:'wpa2-only-enterprise',wpa3e:'wpa3-enterprise'};
+const OK6=['sae','owe','wpa3e'],ENT=['wpa2e','wpa3e'];
+function genAP(){
+  const E=[],W=[],S=[];
+  const models=[...document.querySelectorAll('.model[aria-pressed="true"]')].map(b=>b.dataset.m);if(!models.length)E.push('Velg minst én AP-modell.');
+  const iface=val('a-iface').trim(),country=val('a-country').trim().toUpperCase(),ztp=chk('a-ztp'),def=chk('a-def'),prefix=val('a-prefix').trim();
+  if(ztp&&!iface)E.push('Oppgi grensesnittet AP-ene kobles til.');if(!/^[A-Z]{2}$/.test(country))E.push('Landkode må være to bokstaver, f.eks. NO.');
+  if(!def&&!nameOK(prefix,20))E.push('Profilprefikset må være 1–20 tegn uten mellomrom.');
+  const darrp=chk('a-darrp'),dfs=chk('a-dfs'),steer=chk('a-steer'),wids=chk('a-wids'),w5=val('a-w5'),w6=val('a-w6');
+  const pw={'2g':[num('a-p2l'),num('a-p2h')],'5g':[num('a-p5l'),num('a-p5h')],'6g':[num('a-p6l'),num('a-p6h')]};
+  for(const [b,[l,h]] of Object.entries(pw))if(!(l>=1&&h<=30&&l<=h))E.push(`Effekt for ${b.replace('g',' GHz').replace('2 ','2,4 ')}: min må være lavere enn maks, innenfor 1–30 dBm.`);
+  const access=val('a-access'),apPass=val('a-pass');if(apPass&&(apPass.length<8||/[\s"\\]/.test(apPass)))E.push('AP-passordet må være minst 8 tegn uten mellomrom, " eller \\.');
+  if(access.includes('https'))W.push('HTTPS mot AP-ene er sjelden nødvendig. SSH holder for feilsøking.');
+  const SS=[...document.querySelectorAll('.card-ssid')].map(readCard);if(!SS.length)E.push('Legg til minst én SSID.');
+  const rname=val('a-rname').trim(),rip=val('a-rip').trim(),rsec=val('a-rsec');const needR=SS.some(s=>ENT.includes(s.sec));
+  if(needR){if(!nameOK(rname,35))E.push('RADIUS-navnet er ugyldig.');if(ip2i(rip)===null)E.push('RADIUS-server må være en IPv4-adresse.');if(!rsec)E.push('Oppgi delt hemmelighet for RADIUS.');else if(/[\s"\\]/.test(rsec))E.push('RADIUS-hemmeligheten kan ikke inneholde mellomrom, " eller \\.')}
+  const vapNames=new Set;const has6=models.includes('231K');
+  SS.forEach((s,i)=>{const tag=`SSID «${esc(s.ssid||'#'+(i+1))}»`;
+    if(!s.ssid||s.ssid.length>32||/"/.test(s.ssid))E.push(`${tag}: SSID må være 1–32 tegn uten ".`);
+    if(!nameOK(s.vap,15))E.push(`${tag}: objektnavnet må være 1–15 tegn uten mellomrom.`);else if(vapNames.has(s.vap))E.push(`${tag}: objektnavnet ${esc(s.vap)} er brukt to ganger.`);vapNames.add(s.vap);
+    if(['wpa2p','trans','sae'].includes(s.sec)&&(s.pw.length<8||s.pw.length>63||/["\\]/.test(s.pw)))E.push(`${tag}: passordet må være 8–63 tegn uten " eller \\.`);
+    if(s.mode==='bridge'&&s.vlan&&!(+s.vlan>=1&&+s.vlan<=4094))E.push(`${tag}: VLAN-ID må være 1–4094.`);
+    if(s.mode==='tunnel'){s.tc=cidr(s.tcidr);if(!s.tc||s.tc.hostBits===false||s.tc.p>30)E.push(`${tag}: tunnel-nett må være gateway-IP/prefiks, f.eks. 10.50.0.1/24.`)}
+    if(!s.r2&&!s.r5&&!s.r6)E.push(`${tag}: velg minst én radio.`);
+    s.on6=s.r6&&OK6.includes(s.sec);
+    if(s.r6&&!OK6.includes(s.sec))W.push(`${tag}: 6 GHz krever WPA3 SAE, WPA3 Enterprise eller OWE. Den sendes derfor ikke ut på 6 GHz.`);
+    if(s.r6&&!has6)W.push(`${tag}: ingen av de valgte modellene har 6 GHz. Bare 231K har det.`);
+    if(s.roam&&s.sec==='trans')W.push(`${tag}: 802.11r med WPA2/WPA3 Transition kan gi problemer for enkelte eldre klienter. Test før bred utrulling.`);
+    if(s.sec==='wpa2p')W.push(`${tag}: WPA2 Personal er det svakeste valget. Vurder WPA2/WPA3 Transition.`);
+  });
+  const profName=m=>def?`FAP${m}-default`:`${prefix}-${m}`;
+  const ser=val('a-serials').split('\n').map(x=>x.trim()).filter(Boolean).map(line=>{const [sn,nm]=line.split(/[;,]/).map(x=>(x||'').trim());const mm=(sn||'').toUpperCase().match(/^FP(231F|431F|221K|231K)/);return{sn:(sn||'').toUpperCase(),nm,m:mm&&mm[1]}});
+  ser.forEach(s=>{if(!/^FP[0-9A-Z]{10,14}$/.test(s.sn))E.push(`Serienummer ${esc(s.sn)} ser ikke riktig ut.`);else if(!s.m)E.push(`Serienummer ${esc(s.sn)} er ikke en av modellene 231F, 431F, 221K eller 231K.`);else if(!models.includes(s.m))E.push(`Serienummer ${esc(s.sn)} er en ${s.m}, men den modellen er ikke valgt.`);if(s.nm&&(s.nm.length>35||/"/.test(s.nm)))E.push(`Navnet på ${esc(s.sn)} må være maks 35 tegn uten ".`)});
+  /* Bare primærkanalen i hver bonded blokk: 40 MHz = 36,44,52…, 80 MHz = 36,52,100,116. Ufullstendige blokker (f.eks. 132–144 i ETSI) utelates. */
+  const BLK={'20MHz':1,'40MHz':2,'80MHz':4,'160MHz':8};
+  const prim=(all,base,w)=>{const n=BLK[w]||1,set=new Set(all);return all.filter(c=>(c-base)%(4*n)===0&&Array.from({length:n},(_,k)=>c+4*k).every(x=>set.has(x))).map(String)};
+  const ch5all=[36,40,44,48].concat(dfs?[52,56,60,64,100,104,108,112,116,120,124,128,132,136,140]:[]);
+  const ch6all=[];for(let c=1;c<=93;c+=4)ch6all.push(c);
+  const ch5=prim(ch5all,36,w5),ch6=prim(ch6all,1,w6);
+  if(SS.some(s=>s.r5)){if(!ch5.length)E.push(`Ingen gyldige 5 GHz-kanaler med ${w5}. Slå på DFS-kanaler eller velg smalere kanalbredde.`);
+    else if(ch5.length<3)W.push(`5 GHz med ${w5} gir bare ${ch5.length} kanal(er) (${ch5.join(', ')})${dfs?'':'. Slå på DFS-kanaler'} eller velg smalere kanalbredde, ellers deler nabo-AP-er kanal.`)}
+  if(has6&&SS.some(s=>s.on6)&&ch6.length<3)W.push(`6 GHz med ${w6} gir bare ${ch6.length} kanaler (${ch6.join(', ')}). 80 MHz gir 6 kanaler og passer bedre når det er mange AP-er.`);
+  const vapsOn=b=>SS.filter(s=>b==='2g'?s.r2:b==='5g'?s.r5:s.on6).map(s=>s.vap);
+  const tun=SS.filter(s=>s.mode==='tunnel'&&s.tc);
+
+  const P=pre('fortiap');const D=[...P.segs],U=[];S.push(...P.S);
+  if(ztp)D.push({ctx:'global',fn:c=>c.cfg('system interface',()=>c.edit(iface,()=>{c.line('append allowaccess ping fabric');c.set('auto-auth-extension-device','enable')}))});
+  D.push({ctx:'vdom',fn:c=>{
+    c.cfg('wireless-controller setting',()=>{c.set('country',country);if(darrp)c.set('darrp-optimize',86400)});
+    if(needR)c.cfg('user radius',()=>c.edit(rname,()=>{c.set('server',qq(rip));c.set('secret',qq(rsec))}));
+    c.cfg('wireless-controller vap',()=>SS.forEach(s=>c.edit(s.vap,()=>{
+      c.set('ssid',qq(s.ssid));c.set('security',SEC[s.sec]);
+      if(s.sec==='wpa2p')c.set('passphrase',qq(s.pw));
+      if(s.sec==='trans'){c.set('passphrase',qq(s.pw));c.set('sae-password',qq(s.pw));c.set('pmf','optional')}
+      if(s.sec==='sae'){c.set('sae-password',qq(s.pw));c.set('pmf','enable')}
+      if(s.sec==='owe')c.set('pmf','enable');
+      if(ENT.includes(s.sec)){c.set('auth','radius');c.set('radius-server',qq(rname));if(s.sec==='wpa3e')c.set('pmf','enable');else c.set('pmf','optional')}
+      if(s.sec==='sae'&&s.on6)c.set('sae-h2e-only','enable');
+      c.set('schedule','"always"');
+      if(s.mode==='bridge'){c.set('local-bridging','enable');if(s.vlan)c.set('vlanid',+s.vlan)}
+      if(s.hide)c.set('broadcast-ssid','disable');
+      if(s.iso)c.set('intra-vap-privacy','enable');
+      if(s.roam){c.set('fast-bss-transition','enable');c.set('80211k','enable');c.set('80211v','enable')}
+      if(s.rate){c.set('rates-11a','12-basic 18 24 36 48 54');c.set('rates-11bg','12-basic 18 24 36 48 54')}
+      if(s.mc){c.set('multicast-enhance','enable');c.set('multicast-rate',12000)}
+    })));
+  }});
+  if(tun.length)D.push({ctx:'global',fn:c=>c.cfg('system interface',()=>tun.forEach(s=>c.edit(s.vap,()=>{c.set('ip',`${s.tc.ipS} ${s.tc.maskS}`);c.set('allowaccess','ping');c.set('role','lan');c.set('device-identification','enable')})))});
+  if(tun.length)D.push({ctx:'vdom',fn:c=>c.cfg('system dhcp server',()=>tun.forEach((s,i)=>c.edit(700+i,()=>{
+    c.set('dns-service','default');c.set('default-gateway',s.tc.ipS);c.set('netmask',s.tc.maskS);c.set('interface',qq(s.vap));
+    c.cfg('ip-range',()=>c.edit(1,()=>{c.set('start-ip',i2ip(s.tc.net+Math.min(10,Math.max(1,(s.tc.bc-s.tc.net)>>2))));c.set('end-ip',i2ip(s.tc.bc-1))}))})))});
+  D.push({ctx:'vdom',fn:c=>{
+    c.cfg('wireless-controller wtp-profile',()=>models.forEach(m=>{const M=MODELS[m];c.edit(profName(m),()=>{
+      c.cfg('platform',()=>{c.set('type',m);if(!M.k)c.set('ddscan',wids?'enable':'disable')});
+      if(access)c.set('allowaccess',access);else c.line('unset allowaccess');
+      if(apPass){c.set('login-passwd-change','yes');c.set('login-passwd',qq(apPass))}
+      if(steer)c.set('frequency-handoff','enable');
+      c.set('lldp','enable');
+      M.r.forEach((r,i)=>c.cfg('radio-'+(i+1),()=>{const b=r[0];
+        if(b==='scan'){c.set('mode',wids?'monitor':'disabled');if(wids)c.set('wids-profile','"default"');return}
+        const v=vapsOn(b);if(!v.length){c.set('mode','disabled');return}
+        c.set('mode','ap');
+        c.set('band',b==='2g'?(M.k?'802.11ax-2G':'802.11ax,n,g-only'):b==='5g'?(M.k?'802.11be-5G':'802.11ax-5G'):'802.11be-6G');
+        c.set('channel-bonding',b==='2g'?'20MHz':b==='5g'?w5:w6);
+        c.set('darrp',darrp?'enable':'disable');
+        c.set('auto-power-level','enable');c.set('auto-power-high',pw[b][1]);c.set('auto-power-low',pw[b][0]);
+        if(M.k&&wids)c.set('wids-profile','"default"');
+        c.set('vap-all','manual');c.set('vaps',v.map(qq).join(' '));
+        c.set('channel',(b==='2g'?['1','6','11']:b==='5g'?ch5:ch6).map(qq).join(' '))}));
+    })}));
+    if(ser.length)c.cfg('wireless-controller wtp',()=>ser.filter(s=>s.m).forEach(s=>c.edit(s.sn,()=>{
+      c.set('admin','enable');if(s.nm)c.set('name',qq(s.nm));c.set('wtp-profile',qq(profName(s.m)));if(chk('a-fw'))c.set('firmware-provision-latest','once')})));
+  }});
+  U.push({ctx:'vdom',fn:c=>{
+    if(ser.length)c.cfg('wireless-controller wtp',()=>ser.filter(s=>s.m).forEach(s=>c.line('delete '+qq(s.sn))));
+    c.cfg('wireless-controller wtp-profile',()=>models.forEach(m=>{const M=MODELS[m];
+      if(def)c.edit(profName(m),()=>M.r.forEach((r,i)=>{if(r[0]!=='scan')c.cfg('radio-'+(i+1),()=>{c.line('unset vaps');c.set('vap-all','tunnel')})}));
+      else c.line('delete '+qq(profName(m)))}));
+    if(tun.length)c.cfg('system dhcp server',()=>tun.forEach((_,i)=>c.line('delete '+(700+i))));
+    c.cfg('wireless-controller vap',()=>SS.forEach(s=>c.line('delete '+qq(s.vap))));
+    if(needR)c.cfg('user radius',()=>c.line('delete '+qq(rname)));}});
+  if(ztp)U.push({ctx:'global',fn:c=>c.cfg('system interface',()=>c.edit(iface,()=>{c.line('unselect allowaccess fabric');c.set('auto-auth-extension-device','disable')}))});
+
+  models.forEach(m=>{const M=MODELS[m];const parts=M.r.map((r,i)=>{const b=r[0];if(b==='scan')return `radio ${i+1} ${wids?'dedikert skanning':'av'}`;const v=vapsOn(b);return `radio ${i+1} ${b.replace('2g','2,4 GHz').replace('5g','5 GHz').replace('6g','6 GHz')}: ${v.length?v.join(', '):'av (ingen SSID)'}`});
+    S.push(`<b>FAP-${m}</b> → profil <code>${esc(profName(m))}</code>. ${parts.join('; ')}.`)});
+  if(ztp)S.push(`<code>${esc(iface)}</code> får <code>fabric</code> (CAPWAP) lagt til i allowaccess med <code>append</code>, så eksisterende tilganger beholdes. Nye AP-er godkjennes automatisk.`);
+  if(def)S.push('Profilene skrives til standardprofilene. Da får auto-godkjente AP-er riktig oppsett med én gang. Angre fjerner SSID-ene fra profilene, men lar resten stå.');
+  S.push(`Land ${esc(country)}. 5 GHz bruker kanal ${ch5.join(', ')} med ${w5}${has6?`. 6 GHz bruker kanal ${ch6.join(', ')} med ${w6} (EU, 5945–6425 MHz)`:''}. Bare primærkanalen i hver blokk listes, slik FortiOS krever ved kanalbinding.`);
+  if(darrp)S.push('DARRP velger kanal innenfor listen og optimaliserer en gang i døgnet.');
+  if(steer)S.push('Band steering er en innstilling for hele profilen i FortiOS (<code>frequency-handoff</code>) og gjelder alle SSID-er.');
+  if(SS.some(s=>s.mode==='bridge'&&s.vlan))S.push('Bridge med VLAN: switchporten til AP-en må trunke VLAN-ene '+[...new Set(SS.filter(s=>s.mode==='bridge'&&s.vlan).map(s=>s.vlan))].join(', ')+', med AP-nettet som native.');
+  if(tun.length)S.push(`Tunnel-SSID-er får eget grensesnitt og DHCP (ID ${700}–${699+tun.length}). Du må selv lage brannmurpolicyer for dem.`);
+  if(SS.some(s=>s.sec==='sae'&&s.on6))S.push('WPA3 SAE på 6 GHz bruker H2E (<code>sae-h2e-only</code>). Eldre WPA3-klienter uten H2E kobler seg ikke til den SSID-en.');
+  if(ser.length)S.push(`${ser.filter(s=>s.m).length} AP-er forhåndsregistreres og godkjennes${chk('a-fw')?', og oppgraderes til nyeste firmware én gang':''}.`);
+  if(models.includes('221K'))W.push('FAP-221K er ny. Kjør <code>config wireless-controller wtp-profile</code> → <code>edit x</code> → <code>config platform</code> → <code>set type ?</code> og sjekk at 221K finnes på din FortiOS-versjon.');
+  W.push('Endring av land i <code>wireless-controller setting</code> kan nullstille kanallister i eksisterende profiler. Lim inn i et vedlikeholdsvindu.');
+  return {E,W,S,D,U}}
+
+/* ---------- UI ---------- */
+let tab='vpn',view='deploy',last=null;
+const GEN={vpn:genVPN,vlan:genVLAN,ap:genAP};
+function hl(t){let n=0;return t.split('\n').map(l=>{let e=esc(l).replace(/^(\s*)(config|edit|next|end|set|unset|append|unselect|delete|execute)\b/,'$1<span class="k">$2</span>').replace(/&quot;(?:[^&]|&(?!quot;))*?&quot;/g,m=>`<span class="s">${m}</span>`);return `<span class="l">${e||' '}</span>`}).join('')}
+function update(){
+  syncVisibility();
+  let r;try{r=GEN[tab]()}catch(err){r={E:['Intern feil: '+esc(err.message)],W:[],S:[],D:[],U:[]}}
+  const deploy=render(r.D.filter(Boolean)).replace(/\n\s*\n/g,'\n'),undo=render(r.U);last={deploy,undo};
+  $('msgs').innerHTML=r.E.map(m=>`<li class="err"><span>${m}</span></li>`).join('')+r.W.map(m=>`<li class="warn"><span>${m}</span></li>`).join('');
+  const txt=view==='undo'?undo:deploy;
+  $('code').innerHTML=hl(txt);$('code').classList.toggle('blocked',r.E.length>0);
+  $('summary').innerHTML=`<h4>Dette skjer</h4><ul>${r.S.map(s=>`<li>${s}</li>`).join('')}</ul><h4>Slik bruker du det</h4><ul><li>Kopier <b>Utrulling</b> og lim inn i CLI-konsollet eller via SSH.</li><li>Ta vare på <b>Angre</b> til endringen er verifisert.</li>${val('g-vdom').trim()?`<li>Skriptet går inn i VDOM <code>${esc(val('g-vdom').trim())}</code> og bytter til <code>config global</code> der det trengs.</li>`:''}</ul>`;
+  $('code').hidden=view==='summary';$('summary').hidden=view!=='summary';
+  $('copy').disabled=r.E.length>0||view==='summary';
+  $('lines').textContent=view==='summary'?'':`${txt.split('\n').length} linjer · ${view==='undo'?'angre':'utrulling'}`;
+}
+function syncVisibility(){
+  $('v-tun-box').hidden=!(chk('v-bgp')||chk('v-sdwan'));$('v-sdwan-box').hidden=!chk('v-sdwan');$('v-bgp-box').hidden=!chk('v-bgp');$('v-nat-box').hidden=!chk('v-nat');
+  $('a-prefix-box').hidden=chk('a-def');$('a-def-hint').hidden=!chk('a-def');
+  document.querySelectorAll('.card-vlan').forEach(syncVlan);document.querySelectorAll('.card-ssid').forEach(syncSsid);}
+function setTab(t){if(!GEN[t])t='vpn';tab=t;document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==t);update()}
+document.querySelector('nav.tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(!b)return;try{history.replaceState(null,'','#'+b.dataset.tab)}catch(_){location.hash=b.dataset.tab}setTab(b.dataset.tab)});
+document.querySelector('.views').addEventListener('click',e=>{const b=e.target.closest('button[data-view]');if(!b)return;view=b.dataset.view;document.querySelectorAll('.views button').forEach(x=>x.setAttribute('aria-selected',x===b));update()});
+document.addEventListener('click',e=>{
+  const chip=e.target.closest('.chips button');if(chip){chip.setAttribute('aria-pressed',chip.getAttribute('aria-pressed')!=='true');update();return}
+  const mdl=e.target.closest('.model');if(mdl){mdl.setAttribute('aria-pressed',mdl.getAttribute('aria-pressed')!=='true');update();return}
+  const del=e.target.closest('[data-del]');if(del){del.closest('.sec').remove();update();return}
+  const gen=e.target.closest('[data-gen]');if(gen){gen.parentElement.querySelector('input').value=rnd(20);update();return}
+});
+document.addEventListener('input',update);document.addEventListener('change',update);
+$('v-psk-gen').onclick=()=>{$('v-psk').value=rnd(32);update()};
+$('vlan-add').onclick=()=>{const n=document.querySelectorAll('.card-vlan').length;const vid=10*(n+1)+10;addVlan({vid,name:'VL'+vid,alias:'',gw:`10.10.${vid}.1/24`,ping:true,dhcp:true,inet:true});update()};
+$('ssid-add').onclick=()=>{const n=document.querySelectorAll('.card-ssid').length+1;addSsid({ssid:'Nytt-SSID-'+n,vap:'SSID-'+n,sec:'trans',pw:rnd(16),r2:true,r5:true,roam:true});update()};
+$('copy').onclick=async()=>{const t=view==='undo'?last.undo:last.deploy;
+  try{await navigator.clipboard.writeText(t);$('toast').textContent='Kopiert'}catch(_){const r=document.createRange();r.selectNodeContents($('code'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('toast').textContent='Markert. Trykk Ctrl/Cmd+C.'}
+  setTimeout(()=>$('toast').textContent='',2500)};
+
+/* seed */
+$('v-psk').value=rnd(32);
+addVlan({vid:10,name:'VL10-ANSATTE',alias:'Ansatte',gw:'10.10.10.1/24',role:'lan',ping:true,https:true,ssh:true,dhcp:true,lease:8,dns:'default',inet:true});
+addVlan({vid:20,name:'VL20-GJEST',alias:'Gjest',gw:'10.10.20.1/24',role:'lan',ping:true,dhcp:true,lease:2,dns:'specify',dns1:'1.1.1.1',dns2:'9.9.9.9',inet:true});
+addVlan({vid:30,name:'VL30-AP',alias:'AP-administrasjon',gw:'10.10.30.1/24',role:'lan',ping:true,ap:true,dhcp:true,lease:24,dns:'default',inet:false});
+buildModels();
+addSsid({ssid:'UC-Ansatte',vap:'UC-Ansatte',sec:'trans',pw:'Bytt-meg-Ansatte-2026',mode:'bridge',vlan:10,r2:true,r5:true,roam:true});
+addSsid({ssid:'UC-Ansatte-6E',vap:'UC-Ansatte6E',sec:'sae',pw:'Bytt-meg-Ansatte-2026',mode:'bridge',vlan:10,r5:true,r6:true,roam:true});
+addSsid({ssid:'UC-Gjest',vap:'UC-Gjest',sec:'trans',pw:'Velkommen-2026',mode:'bridge',vlan:20,r2:true,r5:true,iso:true});
+setTab((location.hash||'#vpn').slice(1));
+window.addEventListener('hashchange',()=>setTab(location.hash.slice(1)));
+</script>
+</body>
+</html>
