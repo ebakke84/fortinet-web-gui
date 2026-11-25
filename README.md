@@ -12,7 +12,49 @@ Hver fane gir tre visninger: utrullingsskript, angre-skript og oppsummering. Du 
 
 ## Bruk
 
-Åpne `index.html` i en nettleser, eller publiser repoet med GitHub Pages: **Settings → Pages → Deploy from a branch → `main` / root**.
+### Last ned med git clone
+
+```bash
+git clone https://github.com/ebakke84/fortinet-web-gui.git
+cd fortinet-web-gui
+```
+
+Har du satt opp SSH-nøkkel mot GitHub, kan du bruke SSH i stedet:
+
+```bash
+git clone git@github.com:ebakke84/fortinet-web-gui.git
+```
+
+Hent siste versjon senere med:
+
+```bash
+git pull
+```
+
+### Åpne siden
+
+Åpne `index.html` direkte i nettleseren:
+
+```bash
+# macOS
+open index.html
+
+# Linux
+xdg-open index.html
+
+# Windows (PowerShell)
+start index.html
+```
+
+Du kan også kjøre en enkel lokal webserver og gå til <http://localhost:8000>:
+
+```bash
+python3 -m http.server 8000
+```
+
+### Publiser på nett
+
+Slå på GitHub Pages under **Settings → Pages → Deploy from a branch → `main` / root**. Siden blir da tilgjengelig på <https://ebakke84.github.io/fortinet-web-gui/>.
 
 ## Forbehold
 
