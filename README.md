@@ -6,7 +6,7 @@ En enkel nettside som lager CLI-konfigurasjon for FortiGate med FortiOS 7.6. Alt
 
 - **IPsec site-to-site**: route-based tunnel med IKEv1/IKEv2, flere subnett og blackhole-ruter. Valgfritt SD-WAN, BGP og NAT for overlappende nett.
 - **Interface / VLAN / DHCP**: VLAN-grensesnitt med DHCP-server og internett-policy. Har eget valg for FortiAP/FortiSwitch-nett med CAPWAP, auto-godkjenning, NTP og DHCP option 138.
-- **FortiAP**: zero-touch-oppsett der AP-grensesnittet legges til under *NTP: Listen on interfaces*. NTP kreves for FortiLink-enheter, både AP-er og switcher. Fanen har også med egne profiler for FAP-231F, 431F, 221K og 231K. Dekker SSID-er (WPA2/WPA3/OWE/Enterprise), DARRP, band steering, 802.11r/k/v og kanallister som følger valgt kanalbredde.
+- **FortiAP**: zero-touch-oppsett der AP-grensesnittet legges til under *NTP: Listen on interfaces*. NTP kreves for FortiLink-enheter, både AP-er og switcher. Fanen har også egne profiler for FAP-231F, 431F, 221K og 231K. Dekker SSID-er (WPA2/WPA3/OWE/Enterprise), DARRP, band steering, 802.11r/k/v og kanallister som følger valgt kanalbredde.
 
 Hver fane gir tre visninger: utrullingsskript, angre-skript og oppsummering. Du kan også velge VDOM, ta backup (revisjon) før endring og slå på auto-revert.
 
